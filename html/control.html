@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dungeons and Dragons :: Image Controller</title>
+
+    <link href="css/cropper.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+
+            font-family: 'Montserrat', sans-serif;
+
+        }
+        img {
+            max-width: 100%; /* This rule is very important, please do not ignore this! */
+        }
+
+        .header {
+            height: 32px;
+            line-height: 32px;
+            font-size: 32px;
+            background: #333;
+            color: #fefefe;
+            padding: 8px;
+        }
+
+        .btn {
+            padding: 4px;
+            font-size: 16px;
+            line-height: 24px;
+            background: #fefefe;
+            border-radius: 4px;
+            color: #333;
+        }
+
+        .btn:hover {
+            cursor: pointer;
+            background-color: #CCC;
+        }
+
+        .thumbnail {
+            opacity: 0.8;
+        }
+
+        .thumbnail:hover {
+            cursor: pointer;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span id="back-btn" class="btn" style="visibility: hidden;">< back</span>
+        <span id="accept-btn" class="btn" style="visibility: hidden;">Send to viewer</span>
+        <input id="background-color-input" style="visibility: hidden;" value="#333" />
+        Dungeons and Dragons Image Controller
+    </div>
+
+    <div class="flex rowed">
+        <div id="cropper" style="visibility: hidden;">
+            <img id="image" >
+        </div>
+        <div style="width: 50px; height: 100%"></div>
+    </div>
+
+    <div id="list" style="display: flex; flex-wrap: wrap;">
+
+    </div>
+
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/socket.io.js"></script>
+<script src="scripts/cropper.js"></script>
+<script>
+
+    const socket = io();
+
+    let cropper = null;
+
+    $(document).ready(function () {
+
+        fetch(`http://localhost:9220/api/images`)
+            .then((response) => response.json())
+            .then((images) => images.forEach((image, index) => {
+                $('#list').append(`<img id="image-${index}" class="thumbnail" style="margin: 2px" src="${image.url}" width="24%" height="100%" />`);
+
+                $(`#image-${index}`).on('click', function () {
+
+                    console.log('image click', index, image);
+
+                    $('#image').attr('src', image.url);
+
+                    setCropperVisible();
+                });
+            }));
+
+        const setCropperVisible = function () {
+            $('#cropper').css('visibility', 'visible');
+            $('#back-btn').css('visibility', 'visible');
+            $('#accept-btn').css('visibility', 'visible');
+            $('#background-color-input').css('visibility', 'visible');
+            $('#list').css('visibility', 'hidden');
+
+            cropper = new Cropper(document.getElementById('image'), {
+                aspectRatio: 16 / 10
+            });
+        };
+
+        const setCropperInvisible = function () {
+            $('#cropper').css('visibility', 'hidden');
+            $('#back-btn').css('visibility', 'hidden');
+            $('#accept-btn').css('visibility', 'hidden');
+            $('#list').css('visibility', 'visible');
+        };
+
+        $('#back-btn').on('click', function () {
+            location.reload();
+        });
+
+        $('#accept-btn').on('click', function () {
+
+            if (cropper) {
+                const data = cropper.getCroppedCanvas().toDataURL();
+
+                socket.emit('set-image-update', data);
+                socket.emit('set-image-background', $('#background-color-input').val());
+            } else {
+                console.log('wanted to set an image but there was no cropper present!');
+            }
+
+        });
+
+    });
+
+</script>
+</body>
+</html>

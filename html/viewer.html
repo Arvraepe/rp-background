@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dungeons and Dragons :: Image Viewer</title>
+    <style>
+
+        body, html {
+            margin: 0;
+            padding: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <img id="img" style="height: 100%; width: 100%;" src="https://via.placeholder.com/350x150" />
+
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/socket.io.js"></script>
+<script>
+
+    document.body.style.background = 'black';
+
+    $(document).ready(function () {
+
+        const socket = io();
+
+        socket.on('update-image-background', (background) => {
+            document.body.style.background = background;
+        });
+
+        socket.on('update-image', (event) => {
+
+            document.getElementById('img').setAttribute('src', event);
+
+        });
+
+
+    });
+
+
+</script>
+</body>
+</html>
